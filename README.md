@@ -1,4 +1,4 @@
-# Zerops x NestJS Showcase Worker
+# Zerops x NestJS Showcase
 
 <!-- #ZEROPS_EXTRACT_START:intro# -->
 <!-- #ZEROPS_EXTRACT_END:intro# -->
@@ -38,7 +38,6 @@ zerops:
       initCommands:
         - zsc execOnce ${appVersionId}-worker-migrate --retryUntilSuccessful -- node dist/migrate.js
       envVariables:
-        NODE_ENV: production
         DB_HOST: ${db_hostname}
         DB_PORT: ${db_port}
         DB_NAME: ${db_dbName}
@@ -49,10 +48,10 @@ zerops:
         NATS_HOST: ${broker_hostname}
         NATS_PORT: ${broker_port}
         NATS_USER: ${broker_user}
-        NATS_PASS: ${broker_password}
+        NATS_PASSWORD: ${broker_password}
         S3_ENDPOINT: ${storage_apiUrl}
-        S3_ACCESS_KEY: ${storage_accessKeyId}
-        S3_SECRET_KEY: ${storage_secretAccessKey}
+        S3_ACCESS_KEY_ID: ${storage_accessKeyId}
+        S3_SECRET_ACCESS_KEY: ${storage_secretAccessKey}
         S3_BUCKET: ${storage_bucketName}
         S3_REGION: us-east-1
         SEARCH_URL: http://${search_hostname}:${search_port}
@@ -73,7 +72,6 @@ zerops:
       initCommands:
         - zsc execOnce ${appVersionId}-workerdev-migrate --retryUntilSuccessful -- npx ts-node src/migrate.ts
       envVariables:
-        NODE_ENV: development
         DB_HOST: ${db_hostname}
         DB_PORT: ${db_port}
         DB_NAME: ${db_dbName}
@@ -84,10 +82,10 @@ zerops:
         NATS_HOST: ${broker_hostname}
         NATS_PORT: ${broker_port}
         NATS_USER: ${broker_user}
-        NATS_PASS: ${broker_password}
+        NATS_PASSWORD: ${broker_password}
         S3_ENDPOINT: ${storage_apiUrl}
-        S3_ACCESS_KEY: ${storage_accessKeyId}
-        S3_SECRET_KEY: ${storage_secretAccessKey}
+        S3_ACCESS_KEY_ID: ${storage_accessKeyId}
+        S3_SECRET_ACCESS_KEY: ${storage_secretAccessKey}
         S3_BUCKET: ${storage_bucketName}
         S3_REGION: us-east-1
         SEARCH_URL: http://${search_hostname}:${search_port}

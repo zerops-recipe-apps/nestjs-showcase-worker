@@ -57,8 +57,8 @@ export class NatsSubscriberService
     const codec = JSONCodec<JobMessage>();
     // The queue option turns the subscription into a queue group:
     // replicas sharing the same group name share message delivery
-    // (one message → one consumer) instead of fan-out. Required for
-    // showcase tier 4+ multi-replica deploys.
+    // (one message → one consumer) instead of fan-out. Required
+    // whenever the worker scales to more than one container.
     this.subscription = nc.subscribe(SUBJECT, { queue: QUEUE_GROUP });
     this.logger.log(`Subscribed to ${SUBJECT} (queue=${QUEUE_GROUP}).`);
 

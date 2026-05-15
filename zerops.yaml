@@ -17,7 +17,6 @@ zerops:
       initCommands:
         - zsc execOnce ${appVersionId}-worker-migrate --retryUntilSuccessful -- node dist/migrate.js
       envVariables:
-        NODE_ENV: production
         DB_HOST: ${db_hostname}
         DB_PORT: ${db_port}
         DB_NAME: ${db_dbName}
@@ -52,7 +51,6 @@ zerops:
       initCommands:
         - zsc execOnce ${appVersionId}-workerdev-migrate --retryUntilSuccessful -- npx ts-node src/migrate.ts
       envVariables:
-        NODE_ENV: development
         DB_HOST: ${db_hostname}
         DB_PORT: ${db_port}
         DB_NAME: ${db_dbName}
