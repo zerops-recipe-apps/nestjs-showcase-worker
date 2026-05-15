@@ -11,7 +11,7 @@ class NatsConnectionHolder implements OnModuleInit, OnModuleDestroy {
     const host = process.env.NATS_HOST;
     const port = process.env.NATS_PORT;
     const user = process.env.NATS_USER;
-    const pass = process.env.NATS_PASS;
+    const pass = process.env.NATS_PASSWORD;
     this.connection = await connect({
       servers: `${host}:${port}`,
       user,

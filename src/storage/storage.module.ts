@@ -11,8 +11,8 @@ class StorageClientHolder implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit(): Promise<void> {
     const endpoint = process.env.S3_ENDPOINT;
-    const accessKeyId = process.env.S3_ACCESS_KEY;
-    const secretAccessKey = process.env.S3_SECRET_KEY;
+    const accessKeyId = process.env.S3_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
     this.bucket = process.env.S3_BUCKET ?? '';
 
     this.client = new S3Client({
