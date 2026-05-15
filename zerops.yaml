@@ -1,11 +1,24 @@
+# Two setups: prod runs the compiled worker as a long-lived NATS
+# subscriber; dev ships the source tree under SSHFS so the porter
+# SSHes in and runs `npm run start:dev` (nest --watch) by hand.
+# Both setups are no-HTTP — the worker has no ports, no
+# healthCheck, no readinessCheck.
 zerops:
   - setup: prod
     build:
       base: nodejs@22
       buildCommands:
+        # Compile TypeScript, then strip devDependencies before
+        # the deployFiles step copies node_modules to the runtime
+        # container — keeps the deployed bundle lean and avoids
+        # shipping ts-node, types, lint tooling.
         - npm ci
         - npm run build
         - npm prune --omit=dev
+      # Build container compiles into ./dist; the runtime needs
+      # the compiled JS plus production node_modules so node can
+      # require modules at startup. package.json ships too because
+      # NestJS reads it at boot for metadata.
       deployFiles:
         - ./dist
         - ./node_modules
@@ -14,42 +27,111 @@ zerops:
         - node_modules
     run:
       base: nodejs@22
+      # zsc execOnce keys the migration to the current deploy
+      # version: ${appVersionId} changes every deploy so the
+      # migrator re-fires per deploy (right for idempotent
+      # CREATE TABLE IF NOT EXISTS DDL). The -worker-migrate
+      # suffix scopes the lock to this codebase — the api
+      # codebase runs its own migrator on the same database
+      # with its own -api-migrate suffix, so neither migrator
+      # blocks the other. --retryUntilSuccessful absorbs the
+      # first-deploy window where Postgres has provisioned but
+      # isn't yet accepting connections.
       initCommands:
         - zsc execOnce ${appVersionId}-worker-migrate --retryUntilSuccessful -- node dist/migrate.js
+      # Cross-service references renamed under stable own-keys —
+      # DB_HOST, NATS_HOST, S3_*, SEARCH_* — so the application
+      # code reads platform-neutral names. Swapping a managed
+      # service later is a one-line yaml edit, no app rebuild.
+      # Same-name aliasing (DB_HOST: ${DB_HOST}) would self-shadow
+      # — the literal token wins and the OS env var becomes the
+      # string "${...}".
+      #
+      # NATS is wired as four separate fields (host/port/user/
+      # password) instead of ${broker_connectionString} because
+      # the nats@2.29 client mis-detects IPv6 by colon-count and
+      # rejects auto-generated passwords containing multiple
+      # colons. Separate fields side-step the parser entirely.
+      #
+      # Project-scope envs (APP_SECRET, FRONTEND_URL, API_URL)
+      # are NOT redeclared here — they auto-propagate to every
+      # container, and redeclaring under the same name would
+      # self-shadow into a literal "${APP_SECRET}" string.
       envVariables:
         DB_HOST: ${db_hostname}
         DB_PORT: ${db_port}
         DB_NAME: ${db_dbName}
         DB_USER: ${db_user}
         DB_PASSWORD: ${db_password}
+        # Valkey on Zerops runs unauthenticated — no ${cache_user}
+        # or ${cache_password} aliases exist, and referencing
+        # them would resolve to literal "${cache_password}" and
+        # crash ioredis with AUTH errors. Host + port only.
         CACHE_HOST: ${cache_hostname}
         CACHE_PORT: ${cache_port}
         NATS_HOST: ${broker_hostname}
         NATS_PORT: ${broker_port}
         NATS_USER: ${broker_user}
         NATS_PASSWORD: ${broker_password}
+        # S3_ENDPOINT reads ${storage_apiUrl} (the full https://
+        # form) — composing from ${storage_apiHost} would hit
+        # the gateway's plaintext-http 301 redirect that S3 SDKs
+        # don't follow, producing UnknownError on the first
+        # bucket call. S3_REGION is required by the AWS SDK
+        # contract but MinIO ignores its value; us-east-1 is the
+        # conventional inert pick.
         S3_ENDPOINT: ${storage_apiUrl}
         S3_ACCESS_KEY_ID: ${storage_accessKeyId}
         S3_SECRET_ACCESS_KEY: ${storage_secretAccessKey}
         S3_BUCKET: ${storage_bucketName}
         S3_REGION: us-east-1
+        # Meilisearch internal traffic is plain http on the
+        # project network. The worker ingests documents, so it
+        # needs the master key — never alias this on a frontend
+        # codebase that builds for the browser (use
+        # ${search_defaultSearchKey} there instead).
         SEARCH_URL: http://${search_hostname}:${search_port}
         SEARCH_MASTER_KEY: ${search_masterKey}
+      # Runs the compiled NestJS standalone application context
+      # — boots the DI container, opens NATS / Postgres / Valkey
+      # / object-storage / Meilisearch clients, then parks on
+      # the NATS subscription iterator. No HTTP server, no port
+      # binding, no foreground http listener. The platform sends
+      # SIGTERM on rolling deploys; the bootstrap forwards that
+      # to NestJS shutdown hooks and the subscription drains
+      # before the connection closes.
       start: node dist/main.js
 
   - setup: dev
     build:
       base: nodejs@22
       buildCommands:
+        # npm install (not npm ci) — the dev workflow tolerates
+        # lockfile drift while the porter iterates locally; the
+        # prod setup above pins to package-lock.json.
         - npm install
+      # Full source tree shipped under SSHFS so the porter can
+      # edit code in place and nest --watch picks up the changes
+      # without a redeploy.
       deployFiles: ./
       cache:
         - node_modules
     run:
       base: nodejs@22
+      # Ubuntu provides richer interactive tooling (apt, vim,
+      # curl, git) over the default minimal image — useful when
+      # the porter SSHes in to inspect or debug the worker.
       os: ubuntu
+      # Dev runs the migrator straight from TypeScript source
+      # (npx ts-node) so the porter can edit src/migrate.ts and
+      # the next deploy picks up the change without a build
+      # step. The -workerdev-migrate suffix keeps the dev slot
+      # independent of the prod slot's lock.
       initCommands:
         - zsc execOnce ${appVersionId}-workerdev-migrate --retryUntilSuccessful -- npx ts-node src/migrate.ts
+      # Same wiring as prod — only the run.start command differs
+      # between setups. See the prod block above for the
+      # rationale on each alias.
       envVariables:
         DB_HOST: ${db_hostname}
         DB_PORT: ${db_port}
@@ -69,4 +151,10 @@ zerops:
         S3_REGION: us-east-1
         SEARCH_URL: http://${search_hostname}:${search_port}
         SEARCH_MASTER_KEY: ${search_masterKey}
+      # `zsc noop --silent` keeps the dev container alive without
+      # binding the runtime to a foreground process — the porter
+      # SSHes in and runs `npm run start:dev` (nest --watch) by
+      # hand. Source edits flow through the SSHFS mount and the
+      # watcher rebuilds in place; no redeploy required to see
+      # code changes on the dev slot.
       start: zsc noop --silent
