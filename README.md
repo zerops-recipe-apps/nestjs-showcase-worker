@@ -251,15 +251,11 @@ const s3 = new S3Client({
 
 <!-- #ZEROPS_EXTRACT_START:knowledge-base# -->
 
-### `relation "job_log" already exists` after a co-deployed migrator race
+### Meilisearch is single-node across every tier
 
-The api and worker codebases both run their own migrators on every deploy. Sharing an `execOnce` key between them (e.g. plain `${appVersionId}-migrate` in both `zerops.yaml` files) means whichever container's migrator wins the lock burns the key for the other — the second migrator skips silently and any DDL it owned never runs, OR Postgres throws `relation already exists` when both race past the lock check. Suffix every co-deployed migrator's `execOnce` key with the codebase name (`${appVersionId}-worker-migrate`, `${appVersionId}-api-migrate`) so each migrator owns an independent per-deploy gate. The [zsc execOnce + per-deploy key model](https://docs.zerops.io/zerops-yaml/specification#initcommands-) reference covers `${appVersionId}` re-fire semantics and the static-vs-versioned key split.
+The recipe ships `mode: NON_HA` for the `search` service on every tier, including HA Production — Zerops's managed Meilisearch is single-node with vertical autoscaling. Production scaling is bounded by the per-instance heap; horizontal sharding isn't a one-yaml-edit upgrade. If your index will grow past ~10M documents or query QPS spikes past single-node throughput, plan a vertical bump (`verticalAutoscaling.minRam` in [zerops.yaml](zerops.yaml)) before the ceiling, or budget for an external search service.
 
-### `ioredis` sends garbage `AUTH` commands when wired to Valkey with `password`
+### Each DDL-owning codebase needs its own `execOnce` migrator key
 
-The Valkey service on Zerops runs unauthenticated on the project network — `${cache_user}` and `${cache_password}` don't exist as platform-side env vars. Writing them into `zerops.yaml` aliases produces literal `${cache_password}` strings inside the container, `ioredis` then sends `AUTH ${cache_password}` on every request, and Valkey closes the connection. Wire only `CACHE_HOST: ${cache_hostname}` + `CACHE_PORT: ${cache_port}` and omit the password option from the `ioredis` constructor entirely.
-
-### Meilisearch `masterKey` leaks if the worker's env shape is copied to a browser bundle
-
-The worker reads `${search_masterKey}` because it INGESTS documents (create index, add documents, update searchable attributes) — those operations require admin scope. `masterKey` is a wildcard credential; if a frontend codebase ever copies this worker's env-alias block verbatim it ships an admin key in a public JavaScript bundle. The browser-side equivalent is `${search_defaultSearchKey}`, which is search-only and safe to expose. Keep `SEARCH_MASTER_KEY` on the worker (and any other server-side ingester); never alias it on a frontend codebase that builds for the browser.
+The recipe scopes api and worker migrations under separate `${appVersionId}-api-migrate` and `${appVersionId}-worker-migrate` execOnce keys so they don't contend on a shared lock. If you add a third codebase that issues DDL on the same database, give it its own role-suffixed key (`${appVersionId}-<codebase>-migrate`) — sharing the api or worker key burns the per-deploy gate for whichever migrator loses the race.
 <!-- #ZEROPS_EXTRACT_END:knowledge-base# -->
