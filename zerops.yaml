@@ -63,12 +63,10 @@ zerops:
         DB_NAME: ${db_dbName}
         DB_USER: ${db_user}
         DB_PASSWORD: ${db_password}
-        # Valkey on Zerops runs unauthenticated — no ${cache_user}
-        # or ${cache_password} aliases exist, and referencing
-        # them would resolve to literal "${cache_password}" and
-        # crash ioredis with AUTH errors. Host + port only.
         CACHE_HOST: ${cache_hostname}
         CACHE_PORT: ${cache_port}
+        # Valkey can be password-protected.
+        CACHE_PASSWORD: ${cache_password}
         NATS_HOST: ${broker_hostname}
         NATS_PORT: ${broker_port}
         NATS_USER: ${broker_user}
@@ -140,6 +138,8 @@ zerops:
         DB_PASSWORD: ${db_password}
         CACHE_HOST: ${cache_hostname}
         CACHE_PORT: ${cache_port}
+        # Valkey can be password-protected.
+        CACHE_PASSWORD: ${cache_password}
         NATS_HOST: ${broker_hostname}
         NATS_PORT: ${broker_port}
         NATS_USER: ${broker_user}

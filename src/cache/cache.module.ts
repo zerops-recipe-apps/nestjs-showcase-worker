@@ -10,9 +10,12 @@ class CacheClientHolder implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     const host = process.env.CACHE_HOST;
     const port = parseInt(process.env.CACHE_PORT ?? '6379', 10);
+    // Valkey can be password-protected; authenticate as "default" when set.
+    const password = process.env.CACHE_PASSWORD;
     this.client = new Redis({
       host,
       port,
+      ...(password ? { username: 'default', password } : {}),
       lazyConnect: false,
       maxRetriesPerRequest: 3,
       enableReadyCheck: true,
