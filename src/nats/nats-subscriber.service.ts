@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JSONCodec, NatsConnection, Subscription } from 'nats';
 import type Redis from 'ioredis';
-import type { MeiliSearch } from 'meilisearch';
+import type { Meilisearch } from 'meilisearch';
 import { NATS_CONNECTION } from './nats.provider';
 import { CACHE_CLIENT } from '../cache/cache.module';
 import { SEARCH_CLIENT } from '../search/search.module';
@@ -44,7 +44,7 @@ export class NatsSubscriberService
     @InjectRepository(JobLogEntity)
     private readonly jobLog: Repository<JobLogEntity>,
     @Inject(CACHE_CLIENT) private readonly cache: { client: Redis | null },
-    @Inject(SEARCH_CLIENT) private readonly search: { client: MeiliSearch | null },
+    @Inject(SEARCH_CLIENT) private readonly search: { client: Meilisearch | null },
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
