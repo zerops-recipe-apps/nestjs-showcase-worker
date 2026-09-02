@@ -10,6 +10,8 @@
     "sourceMap": false,
     "outDir": "./dist",
     "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
+    "types": ["node"],
     "incremental": false,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -23,5 +25,8 @@
         "node_modules/meilisearch/dist/index.d.ts"
       ]
     }
-  }
+  },
+  "include": [
+    "src/**/*"
+  ]
 }
