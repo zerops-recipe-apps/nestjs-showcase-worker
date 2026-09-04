@@ -1,6 +1,6 @@
 # nestjs-showcase-worker
 
-NestJS 11 standalone worker (no HTTP server). Subscribes to NATS as a queue-group consumer and fans messages out to Postgres, Valkey, Meilisearch, and S3-compatible storage.
+NestJS 12 standalone worker (no HTTP server). Subscribes to NATS as a queue-group consumer and fans messages out to Postgres, Valkey, Meilisearch, and S3-compatible storage.
 
 ## Zerops service facts
 
