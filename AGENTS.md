@@ -6,7 +6,7 @@ NestJS 12 standalone worker (no HTTP server). Subscribes to NATS as a queue-grou
 
 - HTTP port: none (NATS worker)
 - Siblings: `db`, `cache`, `broker`, `storage`, `search` — env aliases: `DB_*`, `CACHE_*`, `NATS_*`, `S3_*`, `SEARCH_*`
-- Runtime base: `nodejs@22`
+- Runtime base: `nodejs@24`
 
 ## Zerops dev
 
@@ -19,7 +19,7 @@ NestJS 12 standalone worker (no HTTP server). Subscribes to NATS as a queue-grou
 
 ## Notes
 
-- Prod build: `npm ci`, `npm run build`, `npm prune --omit=dev`.
+- Prod build: `npm ci --include=dev`, `npm run build`, `npm prune --omit=dev`.
 - Migration runs via `zsc execOnce ${appVersionId}-worker-migrate` before `start`.
 - NATS credentials are wired as separate host/port/user/password fields — not a connection string (colons in auto-generated passwords break URL parsing).
 - Worker logs `worker-heartbeat ok` every 30s as a liveness signal (no HTTP health endpoint).

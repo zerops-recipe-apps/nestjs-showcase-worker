@@ -6,13 +6,13 @@
 zerops:
   - setup: prod
     build:
-      base: nodejs@22
+      base: nodejs@24
       buildCommands:
         # Compile TypeScript, then strip devDependencies before
         # the deployFiles step copies node_modules to the runtime
         # container — keeps the deployed bundle lean and avoids
         # shipping ts-node, types, lint tooling.
-        - npm ci
+        - npm ci --include=dev
         - npm run build
         - npm prune --omit=dev
       # Build container compiles into ./dist; the runtime needs
@@ -26,7 +26,7 @@ zerops:
       cache:
         - node_modules
     run:
-      base: nodejs@22
+      base: nodejs@24
       # zsc execOnce keys the migration to the current deploy
       # version: ${appVersionId} changes every deploy so the
       # migrator re-fires per deploy (right for idempotent
@@ -102,7 +102,7 @@ zerops:
 
   - setup: dev
     build:
-      base: nodejs@22
+      base: nodejs@24
       buildCommands:
         # npm install (not npm ci) — the dev workflow tolerates
         # lockfile drift while the porter iterates locally; the
@@ -115,7 +115,7 @@ zerops:
       cache:
         - node_modules
     run:
-      base: nodejs@22
+      base: nodejs@24
       # Ubuntu provides richer interactive tooling (apt, vim,
       # curl, git) over the default minimal image — useful when
       # the porter SSHes in to inspect or debug the worker.
