@@ -26,9 +26,9 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3.1103.0",
     "@nestjs/common": "12.1.3",
-    "@nestjs/config": "12.0.0",
+    "@nestjs/config": "12.0.1",
     "@nestjs/core": "12.1.3",
-    "@nestjs/typeorm": "12.0.1",
+    "@nestjs/typeorm": "12.0.2",
     "ioredis": "5.9.3",
     "meilisearch": "0.60.0",
     "nats": "2.29.3",
@@ -40,7 +40,7 @@
   "devDependencies": {
     "@nestjs/cli": "12.0.0",
     "@nestjs/schematics": "12.0.0",
-    "@types/node": "26.1.1",
+    "@types/node": "24.13.3",
     "ts-loader": "9.5.4",
     "ts-node": "10.9.2",
     "tsconfig-paths": "4.2.0",
@@ -54,24 +54,6 @@
     "postgresql"
   ],
   "overrides": {
-    "brace-expansion": "1.1.18",
-    "brace-expansion@2": "2.1.4",
-    "brace-expansion@5": "5.0.9",
-    "minimatch@9": {
-      "brace-expansion": "2.1.4"
-    },
-    "minimatch@10": {
-      "brace-expansion": "5.0.9"
-    },
-    "minimatch@3": {
-      "brace-expansion": "1.1.18"
-    },
-    "fast-uri": "3.1.5",
-    "js-yaml": "4.3.1",
-    "uuid": "11.1.1",
-    "qs": "6.15.2",
-    "@babel/core": "7.29.7",
-    "body-parser": "2.3.0",
-    "browserslist": "4.28.8"
+    "es-toolkit": "1.51.0"
   }
 }
